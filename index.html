@@ -832,97 +832,116 @@ function updatePAD() {
 ['p-range','a-range','d-range'].forEach(id => document.getElementById(id).addEventListener('input', updatePAD));
 
 // ══════════════════════════════════════════
-// PINCH TO ZOOM (focal-point aware)
+// PINCH TO ZOOM + PAN
 // ══════════════════════════════════════════
 (function() {
   const wrap = document.querySelector('.wheel-wrap');
   const scaler = document.getElementById('wheel-scaler');
-  const MIN_SCALE = 1.0;
-  const MAX_SCALE = 3.5;
+  const MIN_SCALE = 1.0, MAX_SCALE = 3.5;
 
-  // Current transform state
-  let scale = 1;
-  let tx = 0, ty = 0;
+  // The transform applied is: translate(tx,ty) scale(scale)
+  // transform-origin is the centre of the element (default 50% 50%)
+  // So in page space: point_page = wrap_centre_page + tx + preTransform_pt * scale
+  let scale = 1, tx = 0, ty = 0;
 
-  // Gesture start state
-  let startDist = 0;
-  let startScale = 1;
-  let startTx = 0, startTy = 0;
-  let startMidX = 0, startMidY = 0;
+  let pinching = false;
+  let p0dist = 0, p0scale = 1, p0tx = 0, p0ty = 0;
+  let p0focalX = 0, p0focalY = 0; // focal in pre-transform space, origin = wrap centre
 
-  function dist(t) {
-    const dx = t[0].clientX - t[1].clientX;
-    const dy = t[0].clientY - t[1].clientY;
-    return Math.sqrt(dx * dx + dy * dy);
+  let panning = false;
+  let pan0cx = 0, pan0cy = 0, pan0tx = 0, pan0ty = 0;
+
+  let lastTap = 0;
+
+  // wrap centre in page coords — uses wrap.getBoundingClientRect() which
+  // is NEVER affected by the scaler's CSS transform (scaler is a child)
+  function wrapPageCentre() {
+    const r = wrap.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
 
-  function midpoint(t) {
-    return {
-      x: (t[0].clientX + t[1].clientX) / 2,
-      y: (t[0].clientY + t[1].clientY) / 2
-    };
-  }
-
-  function commit() {
-    // Clamp translation so wheel doesn't wander off screen when zoomed
-    if (scale <= 1) { tx = 0; ty = 0; }
-    scaler.style.transform = scale <= 1
-      ? ''
-      : `translate(${tx}px, ${ty}px) scale(${scale})`;
-  }
-
-  function resetZoom() {
-    scale = 1; tx = 0; ty = 0;
-    scaler.style.transition = 'transform 0.25s ease';
-    commit();
-    setTimeout(() => scaler.style.transition = 'transform 0.05s linear', 260);
+  function commit(s, x, y, animated) {
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+    if (scale <= 1) {
+      scale = 1; tx = 0; ty = 0;
+      scaler.style.transition = animated ? 'transform 0.22s ease' : 'none';
+      scaler.style.transform = '';
+    } else {
+      const maxX = wrap.offsetWidth  * (scale - 1) / 2;
+      const maxY = wrap.offsetHeight * (scale - 1) / 2;
+      tx = Math.max(-maxX, Math.min(maxX, x));
+      ty = Math.max(-maxY, Math.min(maxY, y));
+      scaler.style.transition = animated ? 'transform 0.22s ease' : 'none';
+      scaler.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+    }
+    if (animated) setTimeout(() => { scaler.style.transition = 'none'; }, 230);
   }
 
   wrap.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
       e.preventDefault();
-      startDist = dist(e.touches);
-      startScale = scale;
-      startTx = tx;
-      startTy = ty;
-      const mid = midpoint(e.touches);
-      // Convert midpoint from page coords to wrap-local coords
-      const rect = wrap.getBoundingClientRect();
-      startMidX = mid.x - rect.left;
-      startMidY = mid.y - rect.top;
+      pinching = true; panning = false;
+
+      p0dist  = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY);
+      p0scale = scale; p0tx = tx; p0ty = ty;
+
+      // Pinch midpoint in page coords
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+      // Wrap centre in page coords (safe — wrap itself is not transformed)
+      const wc = wrapPageCentre();
+
+      // Focal point in pre-transform space:
+      // page_pos = wc + tx + focal * scale  =>  focal = (page_pos - wc - tx) / scale
+      p0focalX = (midX - wc.x - tx) / scale;
+      p0focalY = (midY - wc.y - ty) / scale;
+
+    } else if (e.touches.length === 1 && scale > 1) {
+      panning = true; pinching = false;
+      pan0cx = e.touches[0].clientX; pan0cy = e.touches[0].clientY;
+      pan0tx = tx; pan0ty = ty;
     }
   }, { passive: false });
 
   wrap.addEventListener('touchmove', e => {
-    if (e.touches.length === 2) {
+    if (pinching && e.touches.length === 2) {
       e.preventDefault();
-      const d = dist(e.touches);
-      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale * (d / startDist)));
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY);
+      const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, p0scale * d / p0dist));
 
-      // The focal point in the scaler's own coordinate space (before transform)
-      // = (midpoint_in_wrap - current_translation) / current_scale
-      const focalX = (startMidX - startTx) / startScale;
-      const focalY = (startMidY - startTy) / startScale;
+      // Current pinch midpoint in page coords
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const wc   = wrapPageCentre();
 
-      // After scaling, that focal point should still be at startMid in wrap space:
-      // startMidX = focalX * newScale + newTx  =>  newTx = startMidX - focalX * newScale
-      tx = startMidX - focalX * newScale;
-      ty = startMidY - focalY * newScale;
-      scale = newScale;
-      commit();
+      // Keep focal point under fingers:
+      // midX = wc.x + newTx + p0focalX * s  =>  newTx = midX - wc.x - p0focalX * s
+      commit(s, midX - wc.x - p0focalX * s, midY - wc.y - p0focalY * s, false);
+
+    } else if (panning && e.touches.length === 1 && scale > 1) {
+      e.preventDefault();
+      commit(scale,
+        pan0tx + e.touches[0].clientX - pan0cx,
+        pan0ty + e.touches[0].clientY - pan0cy,
+        false);
     }
   }, { passive: false });
 
-  // Double-tap to reset
-  let lastTap = 0;
   wrap.addEventListener('touchend', e => {
-    if (e.touches.length === 0 && e.changedTouches.length === 1) {
+    if (e.touches.length < 2) pinching = false;
+    if (e.touches.length === 0) {
+      panning = false;
       const now = Date.now();
-      if (now - lastTap < 300) resetZoom();
+      if (now - lastTap < 300) commit(1, 0, 0, true);
       lastTap = now;
     }
   });
 })();
+
+
 
 
 rebuildWheel();
