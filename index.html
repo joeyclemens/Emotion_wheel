@@ -378,9 +378,13 @@ const BODY_CARDS = [
 // STATE
 // ══════════════════════════════════════════
 let mode = 'simple';
-let selEmotion = null, selNuance = null, selIntensity = 1;
-let selBodySens = new Set(), selBodyCards = new Set();
+let selEmotions = new Set();  // set of selected emotion ids
+let selNuances = {};          // id -> nuance string
+let selIntensities = {};      // id -> 0|1|2
+let selBodySens = new Set();
+let selBodyCards = new Set();
 let topBodySuggestion = null;
+let activeDetailId = null;    // which emotion panel is open
 
 // ══════════════════════════════════════════
 // NAV
@@ -403,7 +407,7 @@ function switchMode(m) {
   document.getElementById('btn-simple').classList.toggle('active', m === 'simple');
   document.getElementById('btn-detailed').classList.toggle('active', m === 'detailed');
   rebuildWheel();
-  if (selEmotion) selectEmotion(selEmotion, false);
+  if (activeDetailId) openDetailPanel(activeDetailId, false);
   else document.getElementById('detail').classList.add('hidden');
 }
 
@@ -426,13 +430,6 @@ function svgEl(tag, attrs) {
 }
 function svgText(svg, cx, cy, r, deg, text, size, fill, font, weight) {
   const [x,y] = polar(cx, cy, r, deg);
-  // stroke outline for legibility on pale backgrounds
-  const outline = svgEl('text', { x, y, 'text-anchor':'middle', 'dominant-baseline':'central',
-    fill:'none', stroke:'rgba(0,0,0,0.55)', 'stroke-width':'3', 'stroke-linejoin':'round',
-    'font-family':font, 'font-size':size, 'font-weight':weight,
-    'letter-spacing':'0.4', 'pointer-events':'none', 'paint-order':'stroke' });
-  outline.textContent = text;
-  svg.appendChild(outline);
   const el = svgEl('text', { x, y, 'text-anchor':'middle', 'dominant-baseline':'central',
     fill, 'font-family':font, 'font-size':size, 'font-weight':weight,
     'letter-spacing':'0.4', 'pointer-events':'none' });
@@ -457,21 +454,21 @@ function rebuildWheel() {
     EMOTIONS.forEach((em, i) => {
       const s=i*slice+gap/2, e=(i+1)*slice-gap/2, mid=(s+e)/2;
       const midR = innerR+85, outerR = innerR+150;
-      const p1 = svgPath(svg, cx, cy, midR, outerR, s, e, em.color, 0.5, em.id);
+      const p1 = svgPath(svg, cx, cy, midR, outerR, s, e, em.color, 0.68, em.id);
       const p2 = svgPath(svg, cx, cy, innerR, midR-2, s, e, em.color, 0.88, em.id);
-      svgText(svg, cx, cy, innerR+(outerR-innerR)*0.78, mid, em.label.toUpperCase(), 11, '#ffffff', 'DM Mono, monospace', 500);
+      svgText(svg, cx, cy, innerR+(outerR-innerR)*0.78, mid, em.label.toUpperCase(), 11, '#0f0f13', 'DM Mono, monospace', 500);
       [p1,p2].forEach(p => p.addEventListener('click', () => selectEmotion(em.id)));
     });
   } else {
     EMOTIONS.forEach((em, i) => {
       const s=i*slice+gap/2, e=(i+1)*slice-gap/2, mid=(s+e)/2;
       const rings=[{r1:innerR,r2:innerR+50},{r1:innerR+52,r2:innerR+100},{r1:innerR+102,r2:innerR+148}];
-      const ops=[1.0,0.72,0.42];
+      const ops=[1.0,0.78,0.62];
       rings.forEach((r, tier) => {
         const p = svgPath(svg, cx, cy, r.r1, r.r2, s, e, em.color, ops[tier], em.id, tier);
         const wordIdx = 2 - tier; // tier 0=intense ring, shows tiers[2]
         svgText(svg, cx, cy, (r.r1+r.r2)/2, mid, em.tiers[wordIdx],
-          tier===1?10:tier===2?9.5:8.5, '#ffffff',
+          tier===1?10:tier===2?9.5:8.5, '#0f0f13',
           tier===1?'DM Mono, monospace':'Cormorant Garamond, serif',
           tier===1?500:600);
         p.addEventListener('click', () => { selIntensity = wordIdx; selectEmotion(em.id, false); });
