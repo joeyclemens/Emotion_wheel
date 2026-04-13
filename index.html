@@ -434,6 +434,24 @@ transition: all 0.2s; text-align: center;
   </div>
 </div>
 
+<!-- PANEL OVERLAY -->
+
+<div id="panel-overlay"></div>
+
+<!-- INSIGHT PANEL -->
+
+<div id="insight-panel">
+  <div class="panel-handle" id="panel-handle"></div>
+  <button class="panel-close" id="panel-close">×</button>
+  <div id="panel-content">
+    <div class="panel-loading">
+      <div class="spinner"></div>
+      <span>thinking about this…</span>
+    </div>
+  </div>
+  <button id="copy-btn">copy to clipboard</button>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // DATA
@@ -1241,27 +1259,6 @@ rebuildWheel();
 buildBodyGrid();
 updatePAD();
 </script>
-
-<!-- PANEL OVERLAY -->
-
-<div id="panel-overlay"></div>
-
-<!-- INSIGHT PANEL -->
-
-<div id="insight-panel">
-  <div class="panel-handle" id="panel-handle"></div>
-  <button class="panel-close" id="panel-close">×</button>
-
-  <div id="panel-content">
-    <div class="panel-loading">
-      <div class="spinner"></div>
-      <span>thinking about this…</span>
-    </div>
-  </div>
-
-<button id="copy-btn">copy to clipboard</button>
-
-</div>
 
 </body>
 </html>
