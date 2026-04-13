@@ -832,7 +832,7 @@ function updatePAD() {
 ['p-range','a-range','d-range'].forEach(id => document.getElementById(id).addEventListener('input', updatePAD));
 
 // ══════════════════════════════════════════
-// PINCH TO ZOOM
+// PINCH TO ZOOM (focal-point aware)
 // ══════════════════════════════════════════
 (function() {
   const wrap = document.querySelector('.wheel-wrap');
@@ -840,26 +840,56 @@ function updatePAD() {
   const MIN_SCALE = 1.0;
   const MAX_SCALE = 3.5;
 
+  // Current transform state
   let scale = 1;
-  let lastScale = 1;
+  let tx = 0, ty = 0;
+
+  // Gesture start state
   let startDist = 0;
+  let startScale = 1;
+  let startTx = 0, startTy = 0;
+  let startMidX = 0, startMidY = 0;
 
   function dist(t) {
     const dx = t[0].clientX - t[1].clientX;
     const dy = t[0].clientY - t[1].clientY;
-    return Math.sqrt(dx*dx + dy*dy);
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
-  function applyScale(s) {
-    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
-    scaler.style.transform = scale === 1 ? '' : `scale(${scale})`;
+  function midpoint(t) {
+    return {
+      x: (t[0].clientX + t[1].clientX) / 2,
+      y: (t[0].clientY + t[1].clientY) / 2
+    };
+  }
+
+  function commit() {
+    // Clamp translation so wheel doesn't wander off screen when zoomed
+    if (scale <= 1) { tx = 0; ty = 0; }
+    scaler.style.transform = scale <= 1
+      ? ''
+      : `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
+
+  function resetZoom() {
+    scale = 1; tx = 0; ty = 0;
+    scaler.style.transition = 'transform 0.25s ease';
+    commit();
+    setTimeout(() => scaler.style.transition = 'transform 0.05s linear', 260);
   }
 
   wrap.addEventListener('touchstart', e => {
     if (e.touches.length === 2) {
       e.preventDefault();
       startDist = dist(e.touches);
-      lastScale = scale;
+      startScale = scale;
+      startTx = tx;
+      startTy = ty;
+      const mid = midpoint(e.touches);
+      // Convert midpoint from page coords to wrap-local coords
+      const rect = wrap.getBoundingClientRect();
+      startMidX = mid.x - rect.left;
+      startMidY = mid.y - rect.top;
     }
   }, { passive: false });
 
@@ -867,18 +897,28 @@ function updatePAD() {
     if (e.touches.length === 2) {
       e.preventDefault();
       const d = dist(e.touches);
-      applyScale(lastScale * (d / startDist));
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale * (d / startDist)));
+
+      // The focal point in the scaler's own coordinate space (before transform)
+      // = (midpoint_in_wrap - current_translation) / current_scale
+      const focalX = (startMidX - startTx) / startScale;
+      const focalY = (startMidY - startTy) / startScale;
+
+      // After scaling, that focal point should still be at startMid in wrap space:
+      // startMidX = focalX * newScale + newTx  =>  newTx = startMidX - focalX * newScale
+      tx = startMidX - focalX * newScale;
+      ty = startMidY - focalY * newScale;
+      scale = newScale;
+      commit();
     }
   }, { passive: false });
 
-  // Double-tap to reset zoom
+  // Double-tap to reset
   let lastTap = 0;
   wrap.addEventListener('touchend', e => {
     if (e.touches.length === 0 && e.changedTouches.length === 1) {
       const now = Date.now();
-      if (now - lastTap < 300) {
-        applyScale(1);
-      }
+      if (now - lastTap < 300) resetZoom();
       lastTap = now;
     }
   });
