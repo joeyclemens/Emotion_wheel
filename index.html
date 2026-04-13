@@ -22,6 +22,7 @@
     --accent: #c8b89a;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button { -webkit-appearance: none; appearance: none; -webkit-text-fill-color: inherit; color: inherit; }
   html, body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; overflow-x: hidden; }
 
 header { padding: 26px 22px 0; display: flex; justify-content: space-between; align-items: baseline; }
@@ -56,7 +57,8 @@ padding: 8px 0; border-radius: 20px; cursor: pointer; transition: all 0.2s; text
 background: #17171e; color: #f0ece4; -webkit-text-fill-color: #f0ece4; border-color: #c8b89a;
 }
 
-.wheel-wrap { position: relative; width: 100%; max-width: 380px; margin: 10px auto 0; }
+.wheel-wrap { position: relative; width: 100%; max-width: 380px; margin: 10px auto 0; touch-action: none; }
+#wheel-scaler { transform-origin: center center; transition: transform 0.05s linear; will-change: transform; }
 svg#wheel { width: 100%; height: auto; display: block; }
 .segment { cursor: pointer; transition: opacity 0.2s; }
 .segment:hover { opacity: 0.85; }
@@ -94,12 +96,12 @@ font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em;
 text-transform: uppercase; color: var(–text-dim); margin-bottom: 8px;
 }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 13px; }
-.chip {
+.chip { -webkit-text-fill-color: #9a96a8;
 background: var(–bg); border: 1px solid var(–border); border-radius: 20px;
 padding: 5px 13px; font-size: 0.78rem; font-weight: 400; color: var(–text-dim);
 cursor: pointer; transition: all 0.18s;
 }
-.chip:hover, .chip.selected { color: var(–text); border-color: var(–accent); }
+.chip:hover, .chip.selected { color: var(–text); -webkit-text-fill-color: #f0ece4; border-color: var(–accent); }
 .chip.selected { background: var(–surface); }
 
 .intensity-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 13px; }
@@ -139,7 +141,7 @@ font-size: 0.65rem; font-weight: 400; letter-spacing: 0.08em; text-transform: up
 
 /* ── BODY VIEW ── */
 #body-view { padding-top: 26px; }
-.view-title {
+.view-title { -webkit-text-fill-color: #9a96a8;
 font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em;
 text-transform: uppercase; color: var(–text-dim); margin-bottom: 6px;
 }
@@ -155,8 +157,8 @@ padding: 13px; cursor: pointer; transition: all 0.18s;
 .body-card:hover { border-color: var(–accent); }
 .body-card.selected { border-color: var(–accent); background: #1e1e28; }
 .body-card .bc-icon { font-size: 1.3rem; margin-bottom: 5px; }
-.body-card .bc-label { font-size: 0.78rem; font-weight: 500; color: var(–text); margin-bottom: 2px; }
-.body-card .bc-hint { font-size: 0.64rem; color: var(–text-dim); line-height: 1.4; }
+.body-card .bc-label { font-size: 0.78rem; font-weight: 500; color: var(–text); -webkit-text-fill-color: #f0ece4; margin-bottom: 2px; }
+.body-card .bc-hint { font-size: 0.64rem; color: var(–text-dim); -webkit-text-fill-color: #9a96a8; line-height: 1.4; }
 
 /* body suggestions */
 #body-suggestions {
@@ -165,7 +167,7 @@ background: var(–surface); border: 1px solid var(–border);
 border-radius: 12px; padding: 16px 18px;
 }
 #body-suggestions.hidden { display: none; }
-.sugg-title {
+.sugg-title { -webkit-text-fill-color: #9a96a8;
 font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em;
 text-transform: uppercase; color: var(–text-dim); margin-bottom: 12px;
 }
@@ -177,7 +179,7 @@ padding: 10px 0; border-bottom: 1px solid var(–border);
 .sugg-left { display: flex; align-items: center; gap: 10px; }
 .sugg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .sugg-name { font-family: ‘Cormorant Garamond’, serif; font-size: 1.15rem; font-weight: 600; }
-.sugg-words { font-size: 0.68rem; color: var(–text-dim); margin-top: 1px; }
+.sugg-words { font-size: 0.68rem; color: var(–text-dim); -webkit-text-fill-color: #9a96a8; margin-top: 1px; }
 .sugg-score {
 display: flex; gap: 3px; align-items: center;
 }
@@ -185,31 +187,32 @@ display: flex; gap: 3px; align-items: center;
 .score-pip.lit { background: var(–accent); }
 .goto-btn {
 margin-top: 14px; width: 100%;
-background: none; border: 1px solid var(–border);
-color: var(–text-dim); font-family: ‘DM Mono’, monospace;
+background: #0f0f13; border: 1px solid #2a2a35;
+color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+font-family: ‘DM Mono’, monospace;
 font-size: 0.68rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
 padding: 9px 0; border-radius: 20px; cursor: pointer; transition: all 0.2s; text-align: center;
 }
-.goto-btn:hover { border-color: var(–accent); color: var(–text); }
-.goto-btn.primary { border-color: var(–accent); color: var(–text); background: var(–surface); }
+.goto-btn:hover { border-color: #c8b89a; color: #f0ece4; -webkit-text-fill-color: #f0ece4; }
+.goto-btn.primary { border-color: #c8b89a; color: #f0ece4; -webkit-text-fill-color: #f0ece4; background: #17171e; }
 
 /* ── PAD VIEW ── */
 #pad-view { padding-top: 26px; }
 .pad-block { margin-bottom: 26px; max-width: 420px; }
 .pad-label { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
 .pad-name { font-family: ‘Cormorant Garamond’, serif; font-size: 1.3rem; font-weight: 600; }
-.pad-value { font-size: 1.4rem; color: var(–accent); font-weight: 500; }
-.pad-desc { font-size: 0.65rem; font-weight: 400; letter-spacing: 0.06em; color: var(–text-dim); margin-bottom: 10px; }
-.pad-extremes { display: flex; justify-content: space-between; font-size: 0.62rem; font-weight: 500; color: var(–text-faint); margin-top: 5px; }
+.pad-value { font-size: 1.4rem; color: var(–accent); -webkit-text-fill-color: #c8b89a; font-weight: 500; }
+.pad-desc { font-size: 0.65rem; font-weight: 400; letter-spacing: 0.06em; color: var(–text-dim); -webkit-text-fill-color: #9a96a8; margin-bottom: 10px; }
+.pad-extremes { display: flex; justify-content: space-between; font-size: 0.62rem; font-weight: 500; color: var(–text-faint); -webkit-text-fill-color: #3a3848; margin-top: 5px; }
 input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; background: var(–border); border-radius: 2px; outline: none; }
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: var(–accent); cursor: pointer; border: 3px solid var(–bg); box-shadow: 0 0 0 1px var(–accent); }
 .pad-report { margin-top: 22px; max-width: 420px; background: var(–surface); border: 1px solid var(–border); border-radius: 10px; padding: 14px 16px; }
-.pad-report-title { font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(–text-dim); margin-bottom: 9px; }
-.pad-readout { font-family: ‘Cormorant Garamond’, serif; font-size: 1.2rem; font-weight: 400; font-style: italic; line-height: 1.65; color: var(–text); }
+.pad-report-title { font-size: 0.65rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(–text-dim); -webkit-text-fill-color: #9a96a8; margin-bottom: 9px; }
+.pad-readout { -webkit-text-fill-color: #f0ece4; font-family: ‘Cormorant Garamond’, serif; font-size: 1.2rem; font-weight: 400; font-style: italic; line-height: 1.65; color: var(–text); }
 
 .reset-btn {
-display: inline-block; margin-top: 16px; background: none;
-border: 1px solid var(–border); color: var(–text-dim);
+display: inline-block; margin-top: 16px; background: #0f0f13;
+border: 1px solid #2a2a35; color: #9a96a8; -webkit-text-fill-color: #9a96a8;
 font-family: ‘DM Mono’, monospace; font-size: 0.65rem; font-weight: 500;
 letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 16px;
 border-radius: 20px; cursor: pointer; transition: all 0.2s;
@@ -238,8 +241,10 @@ border-radius: 20px; cursor: pointer; transition: all 0.2s;
     <button class="mode-btn" id="btn-detailed">Detailed</button>
   </div>
   <div class="wheel-wrap">
-    <svg id="wheel" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"></svg>
-    <button id="center-reset">clear</button>
+    <div id="wheel-scaler">
+      <svg id="wheel" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"></svg>
+      <button id="center-reset">clear</button>
+    </div>
   </div>
   <div id="detail" class="hidden">
     <div id="simple-detail">
@@ -827,8 +832,59 @@ function updatePAD() {
 ['p-range','a-range','d-range'].forEach(id => document.getElementById(id).addEventListener('input', updatePAD));
 
 // ══════════════════════════════════════════
-// INIT
+// PINCH TO ZOOM
 // ══════════════════════════════════════════
+(function() {
+  const wrap = document.querySelector('.wheel-wrap');
+  const scaler = document.getElementById('wheel-scaler');
+  const MIN_SCALE = 1.0;
+  const MAX_SCALE = 3.5;
+
+  let scale = 1;
+  let lastScale = 1;
+  let startDist = 0;
+
+  function dist(t) {
+    const dx = t[0].clientX - t[1].clientX;
+    const dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+
+  function applyScale(s) {
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s));
+    scaler.style.transform = scale === 1 ? '' : `scale(${scale})`;
+  }
+
+  wrap.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      startDist = dist(e.touches);
+      lastScale = scale;
+    }
+  }, { passive: false });
+
+  wrap.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const d = dist(e.touches);
+      applyScale(lastScale * (d / startDist));
+    }
+  }, { passive: false });
+
+  // Double-tap to reset zoom
+  let lastTap = 0;
+  wrap.addEventListener('touchend', e => {
+    if (e.touches.length === 0 && e.changedTouches.length === 1) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        applyScale(1);
+      }
+      lastTap = now;
+    }
+  });
+})();
+
+
 rebuildWheel();
 buildBodyGrid();
 updatePAD();
