@@ -30,12 +30,15 @@ header { padding: 26px 22px 0; display: flex; justify-content: space-between; al
 
 nav { display: flex; gap: 4px; }
 nav button {
-background: none; border: 1px solid transparent;
-color: var(–text-dim); font-family: ‘DM Mono’, monospace;
+background: #0f0f13; border: 1px solid transparent;
+color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+font-family: ‘DM Mono’, monospace;
 font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
 padding: 5px 11px; border-radius: 20px; cursor: pointer; transition: all 0.2s;
 }
-nav button.active, nav button:hover { border-color: var(–border); color: var(–text); background: var(–surface); }
+nav button.active, nav button:hover {
+border-color: #2a2a35; color: #f0ece4; -webkit-text-fill-color: #f0ece4; background: #17171e;
+}
 
 .view { display: none; padding: 0 22px 44px; }
 .view.active { display: block; }
@@ -43,12 +46,15 @@ nav button.active, nav button:hover { border-color: var(–border); color: var(�
 /* ── WHEEL CONTROLS ── */
 .wheel-controls { display: flex; justify-content: center; gap: 6px; margin: 14px auto 0; max-width: 380px; }
 .mode-btn {
-flex: 1; background: none; border: 1px solid var(–border);
-color: var(–text-dim); font-family: ‘DM Mono’, monospace;
+flex: 1; background: #0f0f13; border: 1px solid #2a2a35;
+color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+font-family: ‘DM Mono’, monospace;
 font-size: 0.68rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
 padding: 8px 0; border-radius: 20px; cursor: pointer; transition: all 0.2s; text-align: center;
 }
-.mode-btn.active { background: var(–surface); color: var(–text); border-color: var(–accent); }
+.mode-btn.active {
+background: #17171e; color: #f0ece4; -webkit-text-fill-color: #f0ece4; border-color: #c8b89a;
+}
 
 .wheel-wrap { position: relative; width: 100%; max-width: 380px; margin: 10px auto 0; }
 svg#wheel { width: 100%; height: auto; display: block; }
@@ -457,7 +463,7 @@ function rebuildWheel() {
       const p1 = svgPath(svg, cx, cy, midR, outerR, s, e, em.color, 0.68, em.id);
       const p2 = svgPath(svg, cx, cy, innerR, midR-2, s, e, em.color, 0.88, em.id);
       svgText(svg, cx, cy, innerR+(outerR-innerR)*0.78, mid, em.label.toUpperCase(), 11, '#0f0f13', 'DM Mono, monospace', 500);
-      [p1,p2].forEach(p => p.addEventListener('click', () => selectEmotion(em.id)));
+      [p1,p2].forEach(p => p.addEventListener('click', () => toggleEmotion(em.id)));
     });
   } else {
     EMOTIONS.forEach((em, i) => {
@@ -471,24 +477,59 @@ function rebuildWheel() {
           tier===1?10:tier===2?9.5:8.5, '#0f0f13',
           tier===1?'DM Mono, monospace':'Cormorant Garamond, serif',
           tier===1?500:600);
-        p.addEventListener('click', () => { selIntensity = wordIdx; selectEmotion(em.id, false); });
+        p.addEventListener('click', () => { toggleEmotion(em.id, wordIdx); });
       });
     });
   }
 }
 
 // ══════════════════════════════════════════
-// SELECT EMOTION
+// TOGGLE EMOTION (multi-select)
 // ══════════════════════════════════════════
-function selectEmotion(id, resetI=true) {
-  selEmotion = id; selNuance = null; selBodySens = new Set();
-  if (resetI) selIntensity = 1;
-  const em = EMOTIONS.find(e => e.id === id);
+function toggleEmotion(id, intensityOverride) {
+  if (selEmotions.has(id)) {
+    // Second tap on already-selected: open its detail panel (don't deselect)
+    activeDetailId = id;
+    openDetailPanel(id, false);
+    return;
+  }
+  // New selection
+  selEmotions.add(id);
+  if (intensityOverride !== undefined) selIntensities[id] = intensityOverride;
+  else if (selIntensities[id] === undefined) selIntensities[id] = 1;
+  activeDetailId = id;
+  refreshSegmentStates();
+  openDetailPanel(id, false);
+  updateSummary();
+}
 
+function deselect(id) {
+  selEmotions.delete(id);
+  delete selNuances[id];
+  delete selIntensities[id];
+  if (activeDetailId === id) {
+    // move to another selected emotion if any
+    activeDetailId = selEmotions.size > 0 ? [...selEmotions][selEmotions.size-1] : null;
+  }
+  refreshSegmentStates();
+  if (activeDetailId) openDetailPanel(activeDetailId, false);
+  else document.getElementById('detail').classList.add('hidden');
+  updateSummary();
+}
+
+function refreshSegmentStates() {
   document.querySelectorAll('.segment').forEach(s => {
-    s.classList.toggle('dimmed', s.dataset.id !== id);
-    s.classList.toggle('selected', s.dataset.id === id);
+    const id = s.dataset.id;
+    s.classList.toggle('selected', selEmotions.has(id));
+    // dim only if something is selected and this isn't one of them
+    s.classList.toggle('dimmed', selEmotions.size > 0 && !selEmotions.has(id));
   });
+}
+
+function openDetailPanel(id, resetIntensity) {
+  const em = EMOTIONS.find(e => e.id === id);
+  if (resetIntensity) selIntensities[id] = 1;
+  const intensity = selIntensities[id] ?? 1;
 
   document.getElementById('detail').classList.remove('hidden');
 
@@ -496,9 +537,13 @@ function selectEmotion(id, resetI=true) {
     document.getElementById('simple-detail').style.display = 'block';
     document.getElementById('detailed-detail').style.display = 'none';
     document.getElementById('s-swatch').style.background = em.color;
-    document.getElementById('s-name').textContent = em.label;
-    document.getElementById('s-name').style.color = em.color;
-    chips('s-nuances', em.nuances, v => { selNuance = v; updateSummary(); }, false);
+
+    // header: name + deselect button
+    const nameEl = document.getElementById('s-name');
+    nameEl.style.color = em.color;
+    buildDetailHeader(nameEl, em);
+
+    chips('s-nuances', em.nuances, v => { selNuances[id] = v; updateSummary(); }, false, selNuances[id]);
     chips('s-body', em.body, v => {
       selBodySens.has(v) ? selBodySens.delete(v) : selBodySens.add(v);
       updateSummary();
@@ -507,25 +552,71 @@ function selectEmotion(id, resetI=true) {
     document.getElementById('simple-detail').style.display = 'none';
     document.getElementById('detailed-detail').style.display = 'block';
     document.getElementById('d-swatch').style.background = em.color;
-    document.getElementById('d-name').textContent = em.label;
-    document.getElementById('d-name').style.color = em.color;
-    buildIntensity(em);
-    chips('d-nuances', em.nuances, v => { selNuance = v; updateSummary(); }, false);
+
+    const nameEl = document.getElementById('d-name');
+    nameEl.style.color = em.color;
+    buildDetailHeader(nameEl, em);
+
+    buildIntensity(em, intensity, id);
+    chips('d-nuances', em.nuances, v => { selNuances[id] = v; updateSummary(); }, false, selNuances[id]);
     chips('d-body', em.body, v => {
       selBodySens.has(v) ? selBodySens.delete(v) : selBodySens.add(v);
       updateSummary();
     }, true);
     buildDyads(em);
   }
-  updateSummary();
+
+  // Show selected-emotions tab row if >1 selected
+  buildSelectionTabs();
 }
 
-function chips(id, items, onSelect, multi) {
+function buildDetailHeader(el, em) {
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode(em.label));
+  if (selEmotions.size > 1 || true) {
+    // always show remove button when an emotion is selected
+    const btn = document.createElement('button');
+    btn.textContent = '×';
+    btn.title = 'Remove';
+    btn.style.cssText = `margin-left:10px;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:50%;width:22px;height:22px;font-size:0.85rem;cursor:pointer;vertical-align:middle;line-height:1;padding:0;`;
+    btn.addEventListener('click', (e) => { e.stopPropagation(); deselect(em.id); });
+    el.appendChild(btn);
+  }
+}
+
+function buildSelectionTabs() {
+  // Remove any existing tab row
+  const existing = document.getElementById('sel-tabs');
+  if (existing) existing.remove();
+  if (selEmotions.size <= 1) return;
+
+  const detail = document.getElementById('detail');
+  const tabRow = document.createElement('div');
+  tabRow.id = 'sel-tabs';
+  tabRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:5px;margin-bottom:13px;';
+
+  selEmotions.forEach(id => {
+    const em = EMOTIONS.find(e => e.id === id);
+    const tab = document.createElement('div');
+    tab.style.cssText = `display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;border:1px solid ${id===activeDetailId?em.color:'var(--border)'};background:${id===activeDetailId?'var(--surface)':'var(--bg)'};cursor:pointer;font-size:0.72rem;font-weight:500;color:${id===activeDetailId?em.color:'var(--text-dim)'};transition:all 0.18s;`;
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:7px;height:7px;border-radius:50%;background:${em.color};display:inline-block;flex-shrink:0;`;
+    tab.appendChild(dot);
+    tab.appendChild(document.createTextNode(em.label));
+    tab.addEventListener('click', () => { activeDetailId = id; openDetailPanel(id, false); });
+    tabRow.appendChild(tab);
+  });
+
+  detail.insertBefore(tabRow, detail.firstChild);
+}
+
+function chips(id, items, onSelect, multi, currentVal) {
   const el = document.getElementById(id);
   el.innerHTML = '';
   items.forEach(item => {
     const c = document.createElement('div');
     c.className = 'chip'; c.textContent = item;
+    if (currentVal === item) c.classList.add('selected');
     c.addEventListener('click', () => {
       if (!multi) el.querySelectorAll('.chip').forEach(x => x.classList.remove('selected'));
       c.classList.toggle('selected');
@@ -535,14 +626,19 @@ function chips(id, items, onSelect, multi) {
   });
 }
 
-function buildIntensity(em) {
+function buildIntensity(em, current, id) {
   const row = document.getElementById('d-intensity');
   row.innerHTML = '';
   ['mild','primary','intense'].forEach((lbl, i) => {
     const btn = document.createElement('div');
-    btn.className = 'intensity-btn' + (selIntensity === i ? ' active' : '');
+    btn.className = 'intensity-btn' + (current === i ? ' active' : '');
     btn.innerHTML = `<span class="i-word">${em.tiers[i]}</span><span class="i-label">${lbl}</span>`;
-    btn.addEventListener('click', () => { selIntensity = i; selNuance = null; selectEmotion(em.id, false); });
+    btn.addEventListener('click', () => {
+      selIntensities[id] = i;
+      delete selNuances[id];
+      openDetailPanel(id, false);
+      updateSummary();
+    });
     row.appendChild(btn);
   });
 }
@@ -558,12 +654,48 @@ function buildDyads(em) {
   });
 }
 
+// ══════════════════════════════════════════
+// DYAD LOOKUP
+// ══════════════════════════════════════════
+function findDyad(ids) {
+  if (ids.length !== 2) return null;
+  const [a, b] = ids;
+  const emA = EMOTIONS.find(e => e.id === a);
+  if (!emA) return null;
+  return emA.dyads.find(d => d.with === b) || null;
+}
+
+// ══════════════════════════════════════════
+// SUMMARY
+// ══════════════════════════════════════════
 function updateSummary() {
   const el = document.getElementById('summary');
-  if (!selEmotion) { el.textContent = 'tap a segment to begin'; el.className = 'empty'; return; }
-  const em = EMOTIONS.find(e => e.id === selEmotion);
-  const word = selNuance || (mode === 'detailed' ? em.tiers[selIntensity] : em.label.toLowerCase());
-  let parts = [`something like ${word}`];
+  if (selEmotions.size === 0) { el.textContent = 'tap a segment to begin'; el.className = 'empty'; return; }
+
+  const ids = [...selEmotions];
+
+  // Get word for each selected emotion
+  const words = ids.map(id => {
+    const em = EMOTIONS.find(e => e.id === id);
+    return selNuances[id] || (mode === 'detailed' ? em.tiers[selIntensities[id] ?? 1] : em.label.toLowerCase());
+  });
+
+  let emotionPhrase;
+  if (ids.length === 1) {
+    emotionPhrase = `something like ${words[0]}`;
+  } else if (ids.length === 2) {
+    const dyad = findDyad(ids) || findDyad([ids[1], ids[0]]);
+    if (dyad) {
+      emotionPhrase = `something like ${dyad.name.toLowerCase()} — ${words[0]} and ${words[1]}`;
+    } else {
+      emotionPhrase = `something like ${words[0]} and ${words[1]}`;
+    }
+  } else {
+    const last = words[words.length - 1];
+    emotionPhrase = `something like ${words.slice(0, -1).join(', ')} and ${last}`;
+  }
+
+  let parts = [emotionPhrase];
   if (selBodySens.size > 0) {
     const bs = [...selBodySens];
     parts.push(bs.length === 1 ? `with ${bs[0]}` : `with ${bs.slice(0,-1).join(', ')} and ${bs[bs.length-1]}`);
@@ -572,9 +704,11 @@ function updateSummary() {
 }
 
 document.getElementById('center-reset').addEventListener('click', () => {
-  selEmotion = null; selNuance = null; selBodySens = new Set(); selIntensity = 1;
+  selEmotions = new Set(); selNuances = {}; selIntensities = {};
+  selBodySens = new Set(); activeDetailId = null;
   document.querySelectorAll('.segment').forEach(s => s.classList.remove('selected','dimmed'));
   document.getElementById('detail').classList.add('hidden');
+  const existing = document.getElementById('sel-tabs'); if (existing) existing.remove();
   const el = document.getElementById('summary'); el.textContent = 'tap a segment to begin'; el.className = 'empty';
 });
 
@@ -662,7 +796,7 @@ document.getElementById('goto-wheel-btn').addEventListener('click', () => {
   document.querySelectorAll('.view').forEach(v => {
     v.classList.toggle('active', v.id === 'wheel-view');
   });
-  selectEmotion(topBodySuggestion);
+  toggleEmotion(topBodySuggestion);
 });
 
 document.getElementById('body-reset').addEventListener('click', () => {
