@@ -1,22 +1,22 @@
-exports.handler = async function(event) {
-if (event.httpMethod !== ‘POST’) {
-return { statusCode: 405, body: ‘Method Not Allowed’ };
+export default async function(req) {
+if (req.method !== ‘POST’) {
+return new Response(‘Method Not Allowed’, { status: 405 });
 }
 
 let prompt;
 try {
-({ prompt } = JSON.parse(event.body));
+({ prompt } = await req.json());
 } catch {
-return { statusCode: 400, body: ‘Bad request’ };
+return new Response(‘Bad request’, { status: 400 });
 }
 
 if (!prompt) {
-return { statusCode: 400, body: ‘Missing prompt’ };
+return new Response(‘Missing prompt’, { status: 400 });
 }
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 if (!apiKey) {
-return { statusCode: 500, body: ‘API key not configured’ };
+return new Response(‘API key not configured’, { status: 500 });
 }
 
 try {
@@ -38,20 +38,23 @@ messages: [{ role: ‘user’, content: prompt }]
 ```
 if (!res.ok) {
   const err = await res.text();
-  return { statusCode: res.status, body: err };
+  return new Response(err, { status: res.status });
 }
 
 const data = await res.json();
 const text = data.content?.find(b => b.type === 'text')?.text || '';
 
-return {
-  statusCode: 200,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ text })
-};
+return new Response(JSON.stringify({ text }), {
+  status: 200,
+  headers: { 'Content-Type': 'application/json' }
+});
 ```
 
 } catch (err) {
-return { statusCode: 500, body: err.message };
+return new Response(err.message, { status: 500 });
 }
+}
+
+export const config = {
+path: ‘/.netlify/functions/insight’
 };
