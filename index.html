@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="How Am I">
+<meta name="theme-color" content="#0f0f13">
+<title>How Am I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #17171e;
+    --border: #2a2a35;
+    --text: #e8e4dc;
+    --text-dim: #7a7888;
+    --text-faint: #3a3848;
+    --accent: #c8b89a;
+
+```
+--joy:          #e8c84a;
+--trust:        #7ac47a;
+--fear:         #6ab4d4;
+--surprise:     #a07ad4;
+--sadness:      #5080b8;
+--disgust:      #88a848;
+--anger:        #d45858;
+--anticipation: #e8944a;
+```
+
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘DM Mono’, monospace;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+header {
+padding: 28px 24px 0;
+display: flex;
+justify-content: space-between;
+align-items: baseline;
+}
+.logo {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.6rem;
+font-weight: 300;
+letter-spacing: 0.04em;
+color: var(–text);
+}
+.logo em { font-style: italic; color: var(–accent); }
+
+nav {
+display: flex;
+gap: 4px;
+}
+nav button {
+background: none;
+border: 1px solid transparent;
+color: var(–text-dim);
+font-family: ‘DM Mono’, monospace;
+font-size: 0.62rem;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 5px 10px;
+border-radius: 20px;
+cursor: pointer;
+transition: all 0.2s;
+}
+nav button.active, nav button:hover {
+border-color: var(–border);
+color: var(–text);
+background: var(–surface);
+}
+
+/* ── VIEWS ── */
+.view { display: none; padding: 0 24px 40px; }
+.view.active { display: block; }
+
+/* ── WHEEL VIEW ── */
+#wheel-view { padding-top: 0; }
+
+.wheel-wrap {
+position: relative;
+width: 100%;
+max-width: 380px;
+margin: 20px auto 0;
+}
+
+svg#wheel {
+width: 100%;
+height: auto;
+display: block;
+}
+
+.segment {
+cursor: pointer;
+transition: opacity 0.2s;
+}
+.segment:hover { opacity: 0.85; }
+.segment.dimmed { opacity: 0.22; }
+.segment.selected { filter: brightness(1.18); }
+
+/* center circle button */
+#center-reset {
+position: absolute;
+top: 50%; left: 50%;
+transform: translate(-50%, -50%);
+width: 56px; height: 56px;
+border-radius: 50%;
+background: var(–bg);
+border: 1px solid var(–border);
+color: var(–text-dim);
+font-family: ‘DM Mono’, monospace;
+font-size: 0.5rem;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+text-align: center;
+line-height: 1.3;
+transition: all 0.2s;
+}
+#center-reset:hover { border-color: var(–accent); color: var(–accent); }
+
+/* ── DETAIL PANEL ── */
+#detail {
+margin: 18px auto 0;
+max-width: 380px;
+min-height: 120px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 12px;
+padding: 18px 20px;
+transition: opacity 0.25s;
+}
+#detail.hidden { opacity: 0; pointer-events: none; }
+
+.detail-core {
+display: flex;
+align-items: center;
+gap: 12px;
+margin-bottom: 14px;
+}
+.detail-swatch {
+width: 10px; height: 10px;
+border-radius: 50%;
+flex-shrink: 0;
+}
+.detail-name {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.5rem;
+font-weight: 300;
+letter-spacing: 0.04em;
+}
+
+.nuance-label {
+font-size: 0.58rem;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–text-dim);
+margin-bottom: 8px;
+}
+.nuance-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+}
+.chip {
+background: var(–bg);
+border: 1px solid var(–border);
+border-radius: 20px;
+padding: 5px 12px;
+font-size: 0.72rem;
+color: var(–text-dim);
+cursor: pointer;
+transition: all 0.18s;
+}
+.chip:hover, .chip.selected {
+color: var(–text);
+border-color: var(–accent);
+}
+.chip.selected { background: var(–surface); }
+
+.body-prompt {
+margin-top: 16px;
+padding-top: 14px;
+border-top: 1px solid var(–border);
+font-size: 0.65rem;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+color: var(–text-dim);
+margin-bottom: 8px;
+}
+.body-chips {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+}
+
+/* ── SUMMARY ── */
+#summary {
+margin: 14px auto 0;
+max-width: 380px;
+min-height: 48px;
+padding: 12px 16px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.05rem;
+font-weight: 300;
+line-height: 1.5;
+color: var(–text);
+font-style: italic;
+}
+#summary.empty { color: var(–text-faint); font-style: normal; font-family: ‘DM Mono’; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── BODY VIEW ── */
+#body-view { padding-top: 28px; }
+
+.section-title {
+font-size: 0.6rem;
+letter-spacing: 0.14em;
+text-transform: uppercase;
+color: var(–text-dim);
+margin-bottom: 16px;
+}
+
+.body-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 10px;
+max-width: 420px;
+}
+.body-card {
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 14px;
+cursor: pointer;
+transition: all 0.18s;
+}
+.body-card:hover { border-color: var(–accent); }
+.body-card.selected { border-color: var(–accent); background: #1e1e28; }
+.body-card .bc-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.body-card .bc-label {
+font-size: 0.72rem;
+color: var(–text);
+letter-spacing: 0.04em;
+margin-bottom: 3px;
+}
+.body-card .bc-hint {
+font-size: 0.6rem;
+color: var(–text-dim);
+line-height: 1.4;
+}
+
+/* ── PAD VIEW ── */
+#pad-view { padding-top: 28px; }
+
+.pad-block { margin-bottom: 32px; max-width: 420px; }
+.pad-label {
+display: flex;
+justify-content: space-between;
+align-items: baseline;
+margin-bottom: 10px;
+}
+.pad-name {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.2rem;
+font-weight: 300;
+}
+.pad-value {
+font-size: 1.4rem;
+color: var(–accent);
+font-family: ‘DM Mono’, monospace;
+}
+.pad-desc {
+font-size: 0.6rem;
+letter-spacing: 0.08em;
+text-transform: uppercase;
+color: var(–text-dim);
+margin-bottom: 12px;
+}
+.pad-extremes {
+display: flex;
+justify-content: space-between;
+font-size: 0.58rem;
+color: var(–text-faint);
+letter-spacing: 0.06em;
+margin-top: 6px;
+}
+
+input[type=range] {
+-webkit-appearance: none;
+appearance: none;
+width: 100%;
+height: 3px;
+background: var(–border);
+border-radius: 2px;
+outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 22px; height: 22px;
+border-radius: 50%;
+background: var(–accent);
+cursor: pointer;
+border: 3px solid var(–bg);
+box-shadow: 0 0 0 1px var(–accent);
+}
+
+.pad-report {
+margin-top: 28px;
+max-width: 420px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 10px;
+padding: 16px 18px;
+}
+.pad-report-title {
+font-size: 0.58rem;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+color: var(–text-dim);
+margin-bottom: 10px;
+}
+.pad-readout {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.3rem;
+font-weight: 300;
+font-style: italic;
+line-height: 1.5;
+color: var(–text);
+}
+
+/* ── RESET BTN ── */
+.reset-btn {
+display: inline-block;
+margin-top: 20px;
+background: none;
+border: 1px solid var(–border);
+color: var(–text-dim);
+font-family: ‘DM Mono’, monospace;
+font-size: 0.6rem;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+padding: 8px 16px;
+border-radius: 20px;
+cursor: pointer;
+transition: all 0.2s;
+}
+.reset-btn:hover { border-color: var(–text-dim); color: var(–text); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo"><em>how</em> am i</span>
+  <nav>
+    <button class="active" data-view="wheel-view">Wheel</button>
+    <button data-view="body-view">Body</button>
+    <button data-view="pad-view">PAD</button>
+  </nav>
+</header>
+
+<!-- ══════════════ WHEEL VIEW ══════════════ -->
+
+<div id="wheel-view" class="view active">
+
+  <div class="wheel-wrap">
+    <svg id="wheel" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"></svg>
+    <button id="center-reset">clear</button>
+  </div>
+
+  <div id="detail" class="hidden">
+    <div class="detail-core">
+      <div class="detail-swatch" id="detail-swatch"></div>
+      <div class="detail-name" id="detail-name"></div>
+    </div>
+    <div class="nuance-label">more specific</div>
+    <div class="nuance-chips" id="nuance-chips"></div>
+    <div class="body-prompt">body sensations</div>
+    <div class="body-chips" id="body-chips-inline"></div>
+  </div>
+
+  <div id="summary" class="empty">tap a segment to begin</div>
+
+</div>
+
+<!-- ══════════════ BODY VIEW ══════════════ -->
+
+<div id="body-view" class="view">
+  <div class="section-title">what is your body doing?</div>
+  <div class="body-grid" id="body-grid"></div>
+  <button class="reset-btn" id="body-reset">clear</button>
+</div>
+
+<!-- ══════════════ PAD VIEW ══════════════ -->
+
+<div id="pad-view" class="view">
+  <div class="section-title">no words needed — just numbers</div>
+
+  <div class="pad-block">
+    <div class="pad-label">
+      <span class="pad-name">Pleasure</span>
+      <span class="pad-value" id="p-val">5</span>
+    </div>
+    <div class="pad-desc">1 = bad / wrong / painful → 10 = good / right / pleasant</div>
+    <input type="range" id="p-range" min="1" max="10" value="5">
+    <div class="pad-extremes"><span>bad</span><span>good</span></div>
+  </div>
+
+  <div class="pad-block">
+    <div class="pad-label">
+      <span class="pad-name">Arousal</span>
+      <span class="pad-value" id="a-val">5</span>
+    </div>
+    <div class="pad-desc">1 = flat / numb / very still → 10 = wired / buzzing / activated</div>
+    <input type="range" id="a-range" min="1" max="10" value="5">
+    <div class="pad-extremes"><span>flat</span><span>wired</span></div>
+  </div>
+
+  <div class="pad-block">
+    <div class="pad-label">
+      <span class="pad-name">Dominance</span>
+      <span class="pad-value" id="d-val">5</span>
+    </div>
+    <div class="pad-desc">1 = out of control / overwhelmed → 10 = in control / grounded</div>
+    <input type="range" id="d-range" min="1" max="10" value="5">
+    <div class="pad-extremes"><span>overwhelmed</span><span>grounded</span></div>
+  </div>
+
+  <div class="pad-report">
+    <div class="pad-report-title">your reading</div>
+    <div class="pad-readout" id="pad-readout"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+
+const EMOTIONS = [
+  {
+    id: 'joy', label: 'Joy', color: '#e8c84a',
+    nuances: ['serenity','contentment','happiness','elation','ecstasy','delight','cheerfulness','optimism'],
+    body: ['light chest','smiling','relaxed shoulders','energy in legs','open posture']
+  },
+  {
+    id: 'trust', label: 'Trust', color: '#7ac47a',
+    nuances: ['acceptance','openness','liking','confidence','admiration','reverence'],
+    body: ['soft belly','open hands','relaxed jaw','steady breathing','warmth in chest']
+  },
+  {
+    id: 'fear', label: 'Fear', color: '#6ab4d4',
+    nuances: ['apprehension','wariness','nervousness','dread','terror','anxiety','unease'],
+    body: ['tight throat','fast heart','shallow breath','cold hands','frozen feeling','scanning eyes']
+  },
+  {
+    id: 'surprise', label: 'Surprise', color: '#a07ad4',
+    nuances: ['distraction','uncertainty','amazement','astonishment','shock','disbelief'],
+    body: ['wide eyes','sharp breath','stillness','raised brows','open mouth']
+  },
+  {
+    id: 'sadness', label: 'Sadness', color: '#5080b8',
+    nuances: ['pensiveness','melancholy','grief','sorrow','anguish','emptiness','loneliness'],
+    body: ['heavy chest','low energy','slow movement','tight throat','hollow stomach','downward gaze']
+  },
+  {
+    id: 'disgust', label: 'Disgust', color: '#88a848',
+    nuances: ['boredom','dislike','aversion','revulsion','contempt','loathing'],
+    body: ['stomach turning','tension in face','pulling back','wrinkled nose','tightness']
+  },
+  {
+    id: 'anger', label: 'Anger', color: '#d45858',
+    nuances: ['annoyance','frustration','irritability','hostility','rage','fury','resentment'],
+    body: ['tight jaw','hot face','clenched hands','tense neck','pressure in chest','held breath']
+  },
+  {
+    id: 'anticipation', label: 'Anticipation', color: '#e8944a',
+    nuances: ['interest','alertness','expectancy','eagerness','excitement','impatience'],
+    body: ['restless legs','forward lean','tight stomach','wide eyes','fast thinking','fidgeting']
+  }
+];
+
+const BODY_CARDS = [
+  { icon: '🫀', label: 'Heart racing', hint: 'fast or pounding heartbeat' },
+  { icon: '🫁', label: 'Breath changed', hint: 'fast, shallow, or held' },
+  { icon: '🤢', label: 'Stomach uneasy', hint: 'sick, hollow, or tight' },
+  { icon: '🥶', label: 'Cold or numb', hint: 'hands, feet, or all over' },
+  { icon: '🔥', label: 'Hot or flushed', hint: 'face, chest, or neck' },
+  { icon: '😬', label: 'Jaw or shoulders', hint: 'clenched, raised, or tense' },
+  { icon: '🪨', label: 'Heavy', hint: 'chest, limbs, or eyelids' },
+  { icon: '⚡', label: 'Buzzing or wired', hint: 'restless, activated energy' },
+  { icon: '🫧', label: 'Hollow or empty', hint: 'like something is missing' },
+  { icon: '🧊', label: 'Frozen', hint: 'still, unable to move or speak' },
+  { icon: '😪', label: 'Low energy', hint: 'flat, slow, drained' },
+  { icon: '😰', label: 'Sweating', hint: 'palms, back, forehead' },
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let selectedEmotion = null;
+let selectedNuance = null;
+let selectedBodySensations = new Set();
+let selectedBodyCards = new Set();
+
+// ══════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.view).classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════
+// WHEEL RENDERING
+// ══════════════════════════════════════════
+function polarToCart(cx, cy, r, angleDeg) {
+  const a = (angleDeg - 90) * Math.PI / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
+
+function makeArcPath(cx, cy, r1, r2, startDeg, endDeg) {
+  const [x1, y1] = polarToCart(cx, cy, r2, startDeg);
+  const [x2, y2] = polarToCart(cx, cy, r2, endDeg);
+  const [x3, y3] = polarToCart(cx, cy, r1, endDeg);
+  const [x4, y4] = polarToCart(cx, cy, r1, startDeg);
+  const large = (endDeg - startDeg) > 180 ? 1 : 0;
+  return `M${x1},${y1} A${r2},${r2},0,${large},1,${x2},${y2} L${x3},${y3} A${r1},${r1},0,${large},0,${x4},${y4} Z`;
+}
+
+function buildWheel() {
+  const svg = document.getElementById('wheel');
+  const cx = 200, cy = 200;
+  const innerR = 38, outerR = 185;
+  const n = EMOTIONS.length;
+  const slice = 360 / n;
+  const gap = 1.5;
+
+  EMOTIONS.forEach((em, i) => {
+    const start = i * slice + gap / 2;
+    const end = (i + 1) * slice - gap / 2;
+    const mid = (start + end) / 2;
+
+    // outer ring (lighter)
+    const outerPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    outerPath.setAttribute('d', makeArcPath(cx, cy, outerR * 0.62, outerR, start, end));
+    outerPath.setAttribute('fill', em.color);
+    outerPath.setAttribute('fill-opacity', '0.55');
+    outerPath.classList.add('segment');
+    outerPath.dataset.id = em.id;
+
+    // inner ring (richer)
+    const innerPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    innerPath.setAttribute('d', makeArcPath(cx, cy, innerR, outerR * 0.62 - 2, start, end));
+    innerPath.setAttribute('fill', em.color);
+    innerPath.setAttribute('fill-opacity', '0.88');
+    innerPath.classList.add('segment');
+    innerPath.dataset.id = em.id;
+
+    // label
+    const labelR = outerR * 0.81;
+    const [lx, ly] = polarToCart(cx, cy, labelR, mid);
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', lx);
+    text.setAttribute('y', ly);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'central');
+    text.setAttribute('fill', '#0f0f13');
+    text.setAttribute('font-family', 'DM Mono, monospace');
+    text.setAttribute('font-size', '9');
+    text.setAttribute('font-weight', '400');
+    text.setAttribute('letter-spacing', '0.5');
+    text.setAttribute('pointer-events', 'none');
+    text.textContent = em.label.toUpperCase();
+
+    // core word label (inner ring)
+    const coreR = outerR * 0.42;
+    const [cx2, cy2] = polarToCart(cx, cy, coreR, mid);
+    const coreText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    coreText.setAttribute('x', cx2);
+    coreText.setAttribute('y', cy2);
+    coreText.setAttribute('text-anchor', 'middle');
+    coreText.setAttribute('dominant-baseline', 'central');
+    coreText.setAttribute('fill', '#0f0f13');
+    coreText.setAttribute('fill-opacity', '0.7');
+    coreText.setAttribute('font-family', 'Cormorant Garamond, serif');
+    coreText.setAttribute('font-size', '8.5');
+    coreText.setAttribute('pointer-events', 'none');
+
+    svg.appendChild(outerPath);
+    svg.appendChild(innerPath);
+    svg.appendChild(text);
+    svg.appendChild(coreText);
+
+    [outerPath, innerPath].forEach(el => {
+      el.addEventListener('click', () => selectEmotion(em.id));
+    });
+  });
+}
+
+function selectEmotion(id) {
+  selectedEmotion = id;
+  selectedNuance = null;
+  selectedBodySensations = new Set();
+
+  const em = EMOTIONS.find(e => e.id === id);
+
+  document.querySelectorAll('.segment').forEach(s => {
+    if (s.dataset.id === id) {
+      s.classList.add('selected');
+      s.classList.remove('dimmed');
+    } else {
+      s.classList.remove('selected');
+      s.classList.add('dimmed');
+    }
+  });
+
+  // populate detail
+  document.getElementById('detail-swatch').style.background = em.color;
+  document.getElementById('detail-name').textContent = em.label;
+  document.getElementById('detail-name').style.color = em.color;
+
+  const nuanceEl = document.getElementById('nuance-chips');
+  nuanceEl.innerHTML = '';
+  em.nuances.forEach(n => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = n;
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#nuance-chips .chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      selectedNuance = n;
+      updateSummary();
+    });
+    nuanceEl.appendChild(chip);
+  });
+
+  const bodyEl = document.getElementById('body-chips-inline');
+  bodyEl.innerHTML = '';
+  em.body.forEach(b => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = b;
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('selected');
+      if (selectedBodySensations.has(b)) selectedBodySensations.delete(b);
+      else selectedBodySensations.add(b);
+      updateSummary();
+    });
+    bodyEl.appendChild(chip);
+  });
+
+  document.getElementById('detail').classList.remove('hidden');
+  updateSummary();
+}
+
+function updateSummary() {
+  const el = document.getElementById('summary');
+  if (!selectedEmotion) {
+    el.textContent = 'tap a segment to begin';
+    el.className = 'empty';
+    return;
+  }
+  const em = EMOTIONS.find(e => e.id === selectedEmotion);
+  let parts = [];
+
+  const word = selectedNuance || em.label.toLowerCase();
+  parts.push(`something like ${word}`);
+
+  if (selectedBodySensations.size > 0) {
+    const bs = [...selectedBodySensations];
+    if (bs.length === 1) parts.push(`with ${bs[0]}`);
+    else parts.push(`with ${bs.slice(0, -1).join(', ')} and ${bs[bs.length - 1]}`);
+  }
+
+  el.textContent = parts.join(' — ');
+  el.className = '';
+}
+
+document.getElementById('center-reset').addEventListener('click', () => {
+  selectedEmotion = null;
+  selectedNuance = null;
+  selectedBodySensations = new Set();
+  document.querySelectorAll('.segment').forEach(s => {
+    s.classList.remove('selected', 'dimmed');
+  });
+  document.getElementById('detail').classList.add('hidden');
+  const el = document.getElementById('summary');
+  el.textContent = 'tap a segment to begin';
+  el.className = 'empty';
+});
+
+// ══════════════════════════════════════════
+// BODY VIEW
+// ══════════════════════════════════════════
+function buildBodyGrid() {
+  const grid = document.getElementById('body-grid');
+  BODY_CARDS.forEach(card => {
+    const el = document.createElement('div');
+    el.className = 'body-card';
+    el.innerHTML = `<div class="bc-icon">${card.icon}</div><div class="bc-label">${card.label}</div><div class="bc-hint">${card.hint}</div>`;
+    el.addEventListener('click', () => {
+      el.classList.toggle('selected');
+      if (selectedBodyCards.has(card.label)) selectedBodyCards.delete(card.label);
+      else selectedBodyCards.add(card.label);
+    });
+    grid.appendChild(el);
+  });
+}
+
+document.getElementById('body-reset').addEventListener('click', () => {
+  selectedBodyCards = new Set();
+  document.querySelectorAll('.body-card').forEach(c => c.classList.remove('selected'));
+});
+
+// ══════════════════════════════════════════
+// PAD VIEW
+// ══════════════════════════════════════════
+const pRange = document.getElementById('p-range');
+const aRange = document.getElementById('a-range');
+const dRange = document.getElementById('d-range');
+
+function padReadout(p, a, d) {
+  let lines = [];
+
+  // Pleasure
+  if (p <= 3) lines.push('this feels bad or wrong');
+  else if (p <= 6) lines.push('this feels neither good nor bad — somewhere in the middle');
+  else lines.push('this feels okay or good');
+
+  // Arousal
+  if (a <= 3) lines.push('my energy is flat or very low');
+  else if (a <= 6) lines.push('my energy is moderate');
+  else lines.push('I feel activated, wired, or buzzing');
+
+  // Dominance
+  if (d <= 3) lines.push("I feel out of control or overwhelmed");
+  else if (d <= 6) lines.push("I have some sense of control");
+  else lines.push("I feel grounded or in control");
+
+  return lines.join('. ') + '.';
+}
+
+function updatePAD() {
+  const p = +pRange.value, a = +aRange.value, d = +dRange.value;
+  document.getElementById('p-val').textContent = p;
+  document.getElementById('a-val').textContent = a;
+  document.getElementById('d-val').textContent = d;
+  document.getElementById('pad-readout').textContent = padReadout(p, a, d);
+}
+
+[pRange, aRange, dRange].forEach(r => r.addEventListener('input', updatePAD));
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+buildWheel();
+buildBodyGrid();
+updatePAD();
+</script>
+
+</body>
+</html>
