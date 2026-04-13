@@ -219,6 +219,118 @@ border-radius: 20px; cursor: pointer; transition: all 0.2s;
 }
 .reset-btn:hover { border-color: var(–text-dim); color: var(–text); }
 .divider { border: none; border-top: 1px solid var(–border); margin: 11px 0; }
+
+/* ── INSIGHT BUTTON ── */
+#insight-btn {
+display: none;
+width: calc(100% - 44px); max-width: 380px;
+margin: 10px auto 0; padding: 11px 0;
+background: #17171e; border: 1px solid #c8b89a;
+color: #f0ece4; -webkit-text-fill-color: #f0ece4;
+font-family: ‘DM Mono’, monospace; font-size: 0.7rem; font-weight: 500;
+letter-spacing: 0.1em; text-transform: uppercase;
+border-radius: 24px; cursor: pointer; transition: all 0.2s;
+text-align: center;
+}
+#insight-btn.visible { display: block; }
+#insight-btn:hover { background: #1e1e28; }
+
+/* ── SLIDE-UP PANEL ── */
+#insight-panel {
+position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+background: #13131a;
+border-top: 1px solid #2a2a35;
+border-radius: 20px 20px 0 0;
+padding: 0 22px 40px;
+transform: translateY(100%);
+transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+max-height: 82vh;
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
+}
+#insight-panel.open { transform: translateY(0); }
+
+.panel-handle {
+width: 36px; height: 4px; border-radius: 2px;
+background: #2a2a35; margin: 12px auto 20px; cursor: pointer;
+}
+
+.panel-close {
+position: absolute; top: 16px; right: 20px;
+background: none; border: none;
+color: #7a7888; -webkit-text-fill-color: #7a7888;
+font-size: 1.2rem; cursor: pointer; padding: 4px 8px;
+line-height: 1;
+}
+
+.panel-section {
+margin-bottom: 24px;
+}
+.panel-section-label {
+font-size: 0.6rem; font-weight: 500; letter-spacing: 0.14em;
+text-transform: uppercase; color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+margin-bottom: 10px;
+}
+.panel-text {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 1.1rem; font-weight: 400; line-height: 1.7;
+color: #f0ece4; -webkit-text-fill-color: #f0ece4;
+}
+.panel-text p { margin-bottom: 10px; }
+.panel-text p:last-child { margin-bottom: 0; }
+
+.panel-actions {
+display: flex; flex-direction: column; gap: 8px; margin-top: 6px;
+}
+.action-card {
+background: #17171e; border: 1px solid #2a2a35;
+border-radius: 10px; padding: 14px 16px;
+}
+.action-title {
+font-size: 0.78rem; font-weight: 500; color: #f0ece4; -webkit-text-fill-color: #f0ece4;
+margin-bottom: 4px;
+}
+.action-desc {
+font-family: ‘Cormorant Garamond’, serif;
+font-size: 0.95rem; color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+line-height: 1.5;
+}
+
+.panel-loading {
+display: flex; align-items: center; gap: 10px;
+padding: 20px 0; color: #7a7888; -webkit-text-fill-color: #7a7888;
+font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.spinner {
+width: 16px; height: 16px; border-radius: 50%;
+border: 2px solid #2a2a35; border-top-color: #c8b89a;
+animation: spin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.panel-error {
+color: #d45858; -webkit-text-fill-color: #d45858;
+font-size: 0.75rem; padding: 16px 0; line-height: 1.5;
+}
+
+/* overlay to close panel */
+#panel-overlay {
+display: none; position: fixed; inset: 0; z-index: 99;
+background: rgba(0,0,0,0.45);
+}
+#panel-overlay.visible { display: block; }
+
+/* copy button */
+#copy-btn {
+margin-top: 20px; width: 100%;
+background: #0f0f13; border: 1px solid #2a2a35;
+color: #9a96a8; -webkit-text-fill-color: #9a96a8;
+font-family: ‘DM Mono’, monospace; font-size: 0.65rem; font-weight: 500;
+letter-spacing: 0.08em; text-transform: uppercase;
+padding: 9px 0; border-radius: 20px; cursor: pointer;
+transition: all 0.2s; text-align: center;
+}
+#copy-btn:hover { border-color: #c8b89a; color: #f0ece4; -webkit-text-fill-color: #f0ece4; }
 </style>
 
 </head>
@@ -276,6 +388,7 @@ border-radius: 20px; cursor: pointer; transition: all 0.2s;
     </div>
   </div>
   <div id="summary" class="empty">tap a segment to begin</div>
+  <button id="insight-btn">understand this →</button>
 </div>
 
 <!-- BODY VIEW -->
@@ -706,6 +819,7 @@ function updateSummary() {
     parts.push(bs.length === 1 ? `with ${bs[0]}` : `with ${bs.slice(0,-1).join(', ')} and ${bs[bs.length-1]}`);
   }
   el.textContent = parts.join(' — '); el.className = '';
+  insightBtn.classList.add('visible');
 }
 
 document.getElementById('center-reset').addEventListener('click', () => {
@@ -715,6 +829,7 @@ document.getElementById('center-reset').addEventListener('click', () => {
   document.getElementById('detail').classList.add('hidden');
   const existing = document.getElementById('sel-tabs'); if (existing) existing.remove();
   const el = document.getElementById('summary'); el.textContent = 'tap a segment to begin'; el.className = 'empty';
+  insightBtn.classList.remove('visible');
 });
 
 // ══════════════════════════════════════════
@@ -832,7 +947,185 @@ function updatePAD() {
 ['p-range','a-range','d-range'].forEach(id => document.getElementById(id).addEventListener('input', updatePAD));
 
 // ══════════════════════════════════════════
-// PINCH TO ZOOM + PAN
+// INSIGHT PANEL
+// ══════════════════════════════════════════
+
+const insightBtn  = document.getElementById('insight-btn');
+const insightPanel = document.getElementById('insight-panel');
+const panelOverlay = document.getElementById('panel-overlay');
+const panelContent = document.getElementById('panel-content');
+const copyBtn      = document.getElementById('copy-btn');
+
+function openPanel() {
+  insightPanel.classList.add('open');
+  panelOverlay.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+function closePanel() {
+  insightPanel.classList.remove('open');
+  panelOverlay.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('panel-close').addEventListener('click', closePanel);
+document.getElementById('panel-handle').addEventListener('click', closePanel);
+panelOverlay.addEventListener('click', closePanel);
+
+// Swipe down to close
+let panelTouchStartY = 0;
+insightPanel.addEventListener('touchstart', e => {
+  panelTouchStartY = e.touches[0].clientY;
+}, { passive: true });
+insightPanel.addEventListener('touchend', e => {
+  if (e.changedTouches[0].clientY - panelTouchStartY > 60) closePanel();
+}, { passive: true });
+
+// Build the prompt from current wheel state
+function buildPrompt() {
+  const ids = [...selEmotions];
+  if (ids.length === 0) return null;
+
+  const emotionParts = ids.map(id => {
+    const em = EMOTIONS.find(e => e.id === id);
+    const intensity = ['mild','primary','intense'][selIntensities[id] ?? 1];
+    const nuance = selNuances[id] || em.tiers[selIntensities[id] ?? 1];
+    return `${nuance} (${intensity} ${em.label.toLowerCase()})`;
+  });
+
+  const bodySens = selBodySens.size > 0 ? [...selBodySens].join(', ') : null;
+
+  let prompt = `I am trying to understand my emotions. I have identified that I am feeling: ${emotionParts.join(' and ')}.`;
+  if (bodySens) prompt += ` My body sensations include: ${bodySens}.`;
+
+  prompt += `
+
+Please respond in two clearly labelled sections:
+
+1. WHAT THIS MIGHT MEAN
+A warm, thoughtful explanation of why someone might feel this way — what situations, thoughts, or needs commonly give rise to these emotions. Keep it human and non-clinical. 3-4 sentences.
+
+2. WHAT TO DO RIGHT NOW
+3 concrete, specific things I could do in the next few minutes to work with this feeling — not suppress it, but acknowledge and move through it. Each suggestion should be a short title followed by one sentence of explanation. Be practical and grounded.
+
+Keep the tone calm, direct, and non-patronising. Do not use therapy-speak or generic platitudes.`;
+
+  return prompt;
+}
+
+// Parse Claude's response into sections
+function parseResponse(text) {
+  const section1Match = text.match(/1\.\s*WHAT THIS MIGHT MEAN\s*([\s\S]*?)(?=2\.\s*WHAT TO DO|$)/i);
+  const section2Match = text.match(/2\.\s*WHAT TO DO RIGHT NOW\s*([\s\S]*?)$/i);
+
+  const meaning  = section1Match ? section1Match[1].trim() : null;
+  const actions  = section2Match ? section2Match[1].trim() : null;
+  return { meaning, actions };
+}
+
+function renderResponse(text) {
+  const { meaning, actions } = parseResponse(text);
+
+  let html = '';
+
+  if (meaning) {
+    html += `<div class="panel-section">
+      <div class="panel-section-label">what this might mean</div>
+      <div class="panel-text">${meaning.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}</div>
+    </div>`;
+  }
+
+  if (actions) {
+    // Parse numbered action items: look for lines starting with a number or dash
+    const lines = actions.split('\n').filter(l => l.trim());
+    const cards = [];
+    let current = null;
+
+    lines.forEach(line => {
+      const titleMatch = line.match(/^[\d\-\*•]+[\.\)]\s*\*{0,2}([^:—–\n]+)[:\-—–]\*{0,2}\s*(.*)/);
+      const boldMatch  = line.match(/^\*\*([^*]+)\*\*[:\s—–]*(.*)/);
+      if (boldMatch) {
+        if (current) cards.push(current);
+        current = { title: boldMatch[1].trim(), desc: boldMatch[2].trim() };
+      } else if (titleMatch) {
+        if (current) cards.push(current);
+        current = { title: titleMatch[1].trim(), desc: titleMatch[2].trim() };
+      } else if (current) {
+        current.desc += (current.desc ? ' ' : '') + line.trim();
+      } else {
+        cards.push({ title: '', desc: line.trim() });
+      }
+    });
+    if (current) cards.push(current);
+
+    html += `<div class="panel-section">
+      <div class="panel-section-label">what to do right now</div>
+      <div class="panel-actions">
+        ${cards.map(c => `<div class="action-card">
+          ${c.title ? `<div class="action-title">${c.title}</div>` : ''}
+          <div class="action-desc">${c.desc}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  if (!html) {
+    // fallback: render as plain text
+    html = `<div class="panel-section"><div class="panel-text">${
+      text.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')
+    }</div></div>`;
+  }
+
+  panelContent.innerHTML = html;
+  copyBtn.dataset.text = text;
+}
+
+async function fetchInsight() {
+  const prompt = buildPrompt();
+  if (!prompt) return;
+
+  panelContent.innerHTML = `<div class="panel-loading"><div class="spinner"></div><span>thinking about this…</span></div>`;
+  copyBtn.dataset.text = '';
+  openPanel();
+
+  try {
+    const res = await fetch('/.netlify/functions/insight', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!res.ok) throw new Error(`API error ${res.status}`);
+    const data = await res.json();
+    const text = data.text || '';
+    if (!text) throw new Error('Empty response');
+    renderResponse(text);
+
+  } catch (err) {
+    panelContent.innerHTML = `<div class="panel-error">
+      Something went wrong. Check your connection and try again.<br><br>
+      <small style="-webkit-text-fill-color:inherit">${err.message}</small>
+    </div>`;
+  }
+}
+
+insightBtn.addEventListener('click', fetchInsight);
+
+copyBtn.addEventListener('click', () => {
+  const text = copyBtn.dataset.text || '';
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.textContent = 'copied ✓';
+    copyBtn.style.borderColor = '#7ac47a';
+    copyBtn.style.webkitTextFillColor = '#7ac47a';
+    setTimeout(() => {
+      copyBtn.textContent = 'copy to clipboard';
+      copyBtn.style.borderColor = '';
+      copyBtn.style.webkitTextFillColor = '';
+    }, 2000);
+  });
+});
+
+
 // ══════════════════════════════════════════
 (function() {
   const wrap = document.querySelector('.wheel-wrap');
@@ -948,6 +1241,27 @@ rebuildWheel();
 buildBodyGrid();
 updatePAD();
 </script>
+
+<!-- PANEL OVERLAY -->
+
+<div id="panel-overlay"></div>
+
+<!-- INSIGHT PANEL -->
+
+<div id="insight-panel">
+  <div class="panel-handle" id="panel-handle"></div>
+  <button class="panel-close" id="panel-close">×</button>
+
+  <div id="panel-content">
+    <div class="panel-loading">
+      <div class="spinner"></div>
+      <span>thinking about this…</span>
+    </div>
+  </div>
+
+<button id="copy-btn">copy to clipboard</button>
+
+</div>
 
 </body>
 </html>
